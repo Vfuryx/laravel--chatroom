@@ -299,14 +299,14 @@
                 <div class="user_lsit clearfix">
 
                     <p class="user_info clearfix">
-                        <img class="avatar" src="http://qiniu.furyx.cn/photo.jpg">
+                        <img class="avatar" src="http://p1oah1pyc.bkt.clouddn.com/photo.jpg">
                         <span class="chat_l_nick">@{{nick}}</span>
                         <input type="hidden" :value="members.fd">
                     </p>
 
 
                     <section class="user_info clearfix" v-for="member in members">
-                        <img class="avatar" src="http://qiniu.furyx.cn/photo.jpg">
+                        <img class="avatar" src="http://p1oah1pyc.bkt.clouddn.com/photo.jpg">
                         <p class="chat_l_nick">@{{ member.nick}}</p>
                         <input type="hidden" :value="member.fd">
                     </section>
@@ -317,14 +317,14 @@
             <div class="chat_r">
                 <section class="top" id="data-list-content">
                     <article class=" line clearfix ">
-                        <img class="avatar" src="http://qiniu.furyx.cn/photo.jpg">
+                        <img class="avatar" src="http://p1oah1pyc.bkt.clouddn.com/photo.jpg">
                         <aside>
                             <p class="chat_l_nick">admin</p>
                             <p class="message">富强、民主、文明、和谐、自由、平等、公正、法治、爱国、敬业、诚信、友善</p>
                         </aside>
                     </article>
                     <article :class="[char.fd == fd ? 'line_r' : 'line', 'clearfix']" v-for=" char in chars">
-                        <img class="avatar" src="http://qiniu.furyx.cn/photo.jpg">
+                        <img class="avatar" src="http://p1oah1pyc.bkt.clouddn.com/photo.jpg">
                         <aside>
                             <p class="chat_l_nick">@{{char.nick}}</p>
                             <p class="message">@{{char.msg}}</p>
@@ -361,7 +361,7 @@
                 timeout: 58000, //58秒
                 timeoutObj: null,
                 lockReconnect: false, //避免重复连接
-                wsurl: "ws://47.98.181.245/ws", //ws地址
+                wsurl: "ws://chatroom.furyx.cn/ws", //ws地址
             },
             methods: {
                 toLogin() {
@@ -540,8 +540,9 @@
                 reconnect: function (url) { //重新连接
                     if (this.lockReconnect) return;
                     this.lockReconnect = true;
+                
                     //没连接上会一直重连，设置延迟避免请求过多
-                    setTimeout(function () {
+                    setTimeout(() => {
                         this.initWebSocket(url);
                         this.lockReconnect = false;
                     }, 2000);

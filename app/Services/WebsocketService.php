@@ -2,17 +2,15 @@
 
 namespace App\Services;
 
-use Hhxsv5\LaravelS\Swoole\WebsocketHandlerInterface;
+use Hhxsv5\LaravelS\Swoole\WebSocketHandlerInterface;
 
 /**
  * @see https://wiki.swoole.com/wiki/page/400.html
  */
-class WebsocketService implements WebsocketHandlerInterface
+class WebSocketService implements WebSocketHandlerInterface
 {
     // 声明没有参数的构造函数
-    public function __construct()
-    {
-    }
+    public function __construct(){}
 
     public function onOpen(\swoole_websocket_server $server, \swoole_http_request $request)
     {
@@ -70,7 +68,16 @@ class WebsocketService implements WebsocketHandlerInterface
                             'num' => count($server->ports[0]->connections)
                         ], true));
                     }
-                    $server->push($frame->fd, json_encode(['stat' => 2, 'fd' => $frame->fd, 'members' => $members, 'num' => count($server->ports[0]->connections)], true));
+                    $server->push(
+                        $frame->fd,
+                        json_encode(
+                            [
+                            'stat' => 2,
+                            'fd' => $frame->fd,
+                            'members' => $members,
+                            'num' => count($server->ports[0]->connections)
+                            ],
+                            true));
                     break;
             }
         } catch (\Error $error) {

@@ -1,4 +1,4 @@
-地址 http://swoole.furyx.cn/
+地址 http://chatroom.furyx.cn/
 
 ## 说明
 
