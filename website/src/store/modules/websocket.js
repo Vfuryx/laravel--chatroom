@@ -3,6 +3,7 @@ const websocket = {
         ws: '',
         name: '',
         pwd: '',
+        // url: 'ws://127.0.0.1:9090/ws',
         url: "ws://" + location.host + "/ws",
         timeoutObj: '',
         login: false,

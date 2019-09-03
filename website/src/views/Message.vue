@@ -6,10 +6,11 @@
       left-arrow
       @click-left="onClickLeft"
     ></van-nav-bar>
-    <div style="padding-bottom: 300px;">
+
+    <div v-if="!this.$route.params.group" style="padding-bottom: 300px;">
       <div v-for="record in records" style="margin-top: 15px;">
         <div
-          :style="record.is_me ? 'padding:0 15px 0 0;float:right' : 'padding:0 0 0 15px;float:left'"
+          :style="record.from == user ? 'padding:0 15px 0 0;float:right' : 'padding:0 0 0 15px;float:left'"
         >
           <van-icon
             size="40px"
@@ -17,12 +18,44 @@
           />
         </div>
         <div class="msg-content">
-          <div :class="record.is_me ? 'right-msg' : 'left-msg' " style="word-wrap:break-word">
+          <div
+            :class="record.from == user ? 'right-msg' : 'left-msg' "
+            style="word-wrap:break-word"
+          >
             {{ record.type == 1 ? record.content : '' }}
             <img
               v-if="record.type == 2"
               :src="record.content"
-            >
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="this.$route.params.group" style="padding-bottom: 300px;">
+      <div v-for="record in records" style="margin-top: 15px;">
+        <div
+          :style="record.from == user ? 'padding:0 15px 0 0;float:right' : 'padding:0 0 0 15px;float:left'"
+        >
+          <van-icon
+            size="40px"
+            name="http://juntao.oss-cn-shenzhen.aliyuncs.com/images/wechat/avatar/xX9hSG0utRz0hmC4hA5b4nWL46Jgn8YGhQ7psWyU.png"
+          />
+        </div>
+        <div class="msg-content">
+          <p
+            class="msg-name"
+            :style="record.from == user ? 'text-align: right' : 'text-align: left' "
+          >{{ record.from }}</p>
+          <div
+            :class="record.from == user ? 'right-msg' : 'left-msg' "
+            style="word-wrap:break-word"
+          >
+            {{ record.type == 1 ? record.content : '' }}
+            <img
+              v-if="record.type == 2"
+              :src="record.content"
+            />
           </div>
         </div>
       </div>
@@ -32,10 +65,10 @@
       <van-row>
         <van-col span="24" class="controller">
           <div class="one">
-            <van-icon size="20px" name="volume" color="#737373" class="my-icon"/>
+            <van-icon size="20px" name="volume" color="#737373" class="my-icon" />
           </div>
           <div class="two">
-            <van-field v-model="value" placeholder="请输入" @keyup.enter="send"/>
+            <van-field v-model="value" placeholder="请输入" @keyup.enter="send" />
           </div>
           <div class="three">
             <van-icon
@@ -55,34 +88,134 @@
           </div>
         </van-col>
       </van-row>
-      <van-row v-if="active == 'emoji'">
+      <van-row v-show="active == 'emoji'">
         <van-col class="smile-content" span="24" style="background-color:#f8f8f8;">
-          <img src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/1.png" class="smile-icon" alt @click="sendEmoji">
-          <img src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/198.png" class="smile-icon" alt @click="sendEmoji">
-          <img src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/201.png" class="smile-icon" alt @click="sendEmoji">
-          <img src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/202.png" class="smile-icon" alt @click="sendEmoji">
-          <img src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/429.png" class="smile-icon" alt @click="sendEmoji">
-          <img src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/430.png" class="smile-icon" alt @click="sendEmoji">
-          <img src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/431.png" class="smile-icon" alt @click="sendEmoji">
-          <img src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/432.png" class="smile-icon" alt @click="sendEmoji">
-          <img src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/434.png" class="smile-icon" alt @click="sendEmoji">
-          <img src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/438.png" class="smile-icon" alt @click="sendEmoji">
-          <img src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/460.png" class="smile-icon" alt @click="sendEmoji">
-          <img src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/701.png" class="smile-icon" alt @click="sendEmoji">
-          <img src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/705.png" class="smile-icon" alt @click="sendEmoji">
-          <img src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/703.png" class="smile-icon" alt @click="sendEmoji">
-          <img src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/706.png" class="smile-icon" alt @click="sendEmoji">
-          <img src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/719.png" class="smile-icon" alt @click="sendEmoji">
-          <img src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/720.png" class="smile-icon" alt @click="sendEmoji">
-          <img src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/725.png" class="smile-icon" alt @click="sendEmoji">
-          <img src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/728.png" class="smile-icon" alt @click="sendEmoji">
-          <img src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/741.png" class="smile-icon" alt @click="sendEmoji">
+          <img
+            src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/1.png"
+            class="smile-icon"
+            alt
+            @click="sendEmoji"
+          />
+          <img
+            src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/198.png"
+            class="smile-icon"
+            alt
+            @click="sendEmoji"
+          />
+          <img
+            src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/201.png"
+            class="smile-icon"
+            alt
+            @click="sendEmoji"
+          />
+          <img
+            src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/202.png"
+            class="smile-icon"
+            alt
+            @click="sendEmoji"
+          />
+          <img
+            src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/429.png"
+            class="smile-icon"
+            alt
+            @click="sendEmoji"
+          />
+          <img
+            src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/430.png"
+            class="smile-icon"
+            alt
+            @click="sendEmoji"
+          />
+          <img
+            src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/431.png"
+            class="smile-icon"
+            alt
+            @click="sendEmoji"
+          />
+          <img
+            src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/432.png"
+            class="smile-icon"
+            alt
+            @click="sendEmoji"
+          />
+          <img
+            src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/434.png"
+            class="smile-icon"
+            alt
+            @click="sendEmoji"
+          />
+          <img
+            src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/438.png"
+            class="smile-icon"
+            alt
+            @click="sendEmoji"
+          />
+          <img
+            src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/460.png"
+            class="smile-icon"
+            alt
+            @click="sendEmoji"
+          />
+          <img
+            src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/701.png"
+            class="smile-icon"
+            alt
+            @click="sendEmoji"
+          />
+          <img
+            src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/705.png"
+            class="smile-icon"
+            alt
+            @click="sendEmoji"
+          />
+          <img
+            src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/703.png"
+            class="smile-icon"
+            alt
+            @click="sendEmoji"
+          />
+          <img
+            src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/706.png"
+            class="smile-icon"
+            alt
+            @click="sendEmoji"
+          />
+          <img
+            src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/719.png"
+            class="smile-icon"
+            alt
+            @click="sendEmoji"
+          />
+          <img
+            src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/720.png"
+            class="smile-icon"
+            alt
+            @click="sendEmoji"
+          />
+          <img
+            src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/725.png"
+            class="smile-icon"
+            alt
+            @click="sendEmoji"
+          />
+          <img
+            src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/728.png"
+            class="smile-icon"
+            alt
+            @click="sendEmoji"
+          />
+          <img
+            src="https://raw.githubusercontent.com/tmm1/emoji-extractor/master/images/160x160/741.png"
+            class="smile-icon"
+            alt
+            @click="sendEmoji"
+          />
         </van-col>
       </van-row>
-      <van-row v-if="active == 'pic'">
+      <van-row v-show="active == 'pic'">
         <van-col span="24" style="background-color:#f8f8f8;">
           <van-uploader :after-read="onRead" style="margin: 20px 15px;">
-            <van-icon size="45px" name="photo" color="#737373" class="send-pic"/>
+            <van-icon size="45px" name="photo" color="#737373" class="send-pic" />
             <div style="text-align: center;font-size:14px">上传图片</div>
           </van-uploader>
         </van-col>
@@ -108,7 +241,11 @@ export default {
   components: {
   },
   created() {
-    this.records = this.$store.getters.getRecordBy(this.$route.params.to_name)
+    if (this.$route.params.group) {
+      this.records = this.$store.getters.getGroupBy(this.$route.params.to_name)
+    } else {
+      this.records = this.$store.getters.getRecordBy(this.$route.params.to_name)
+    }
   },
   methods: {
     onClickLeft() {
@@ -122,21 +259,34 @@ export default {
       this.active = active
     },
     send() {
-      let data = {
-        Source: 1,
-        From: this.user,
-        To: this.$route.params.to_name,
-        Type: 1,
-        Content: this.value,
-        SendAt: "2015"
+      let data = {}
+      let record = {}
+      if (this.$route.params.group) {
+        data = {
+          Source: 2,
+          From: this.user,
+          To: this.$route.params.to_name,
+          Type: 1,
+          Content: this.value,
+          SendAt: "2015"
+        }
+      } else {
+        data = {
+          Source: 1,
+          From: this.user,
+          To: this.$route.params.to_name,
+          Type: 1,
+          Content: this.value,
+          SendAt: "2015"
+        }
+        record = {
+          from: this.user,
+          to: this.$route.params.to_name,
+          type: 1,
+          content: this.value
+        }
+        this.$store.dispatch('addMyRecor', record)
       }
-      let record = {
-        from: this.$route.params.to_name,
-        type: 1,
-        is_me: true,
-        content: this.value
-      }
-      this.$store.dispatch('giveMe', record)
       this.ws.send(JSON.stringify(data))
       this.value = ''
     },
@@ -145,25 +295,35 @@ export default {
     },
     sendEmoji(event) {
 
-      console.log(event.currentTarget.src)
+      let data = {}
+      let record = {}
+      if (this.$route.params.group) {
+        data = {
+          Source: 2,
+          From: this.user,
+          To: this.$route.params.to_name,
+          Type: 1,
+          Content: this.value,
+          SendAt: "2015"
+        }
+      } else {
+        data = {
+          Source: 1,
+          From: this.user,
+          To: this.$route.params.to_name,
+          Type: 2,
+          Content: event.currentTarget.src,
+          SendAt: "2015"
+        }
 
-      let data = {
-        Source: 1,
-        From: this.user,
-        To: this.$route.params.to_name,
-        Type: 2,
-        Content: event.currentTarget.src,
-        SendAt: "2015"
+        record = {
+          from: this.user,
+          to: this.$route.params.to_name,
+          type: 2,
+          content: event.currentTarget.src
+        }
+        this.$store.dispatch('addMyRecor', record)
       }
-      let record = {
-        from: this.$route.params.to_name,
-        type: 2,
-        is_me: true,
-        content: event.currentTarget.src
-      }
-
-      this.$store.dispatch('giveMe', record)
-
       this.ws.send(JSON.stringify(data))
     }
   },
@@ -298,7 +458,6 @@ export default {
 }
 
 .send-pic {
-  
   padding: 8px;
   margin: 15px 15px 5px;
 
@@ -376,5 +535,9 @@ export default {
 
   border: 10px solid transparent;
   border-left-color: rgb(88, 228, 151);
+}
+
+.msg-name {
+  margin: 1px 0;
 }
 </style>

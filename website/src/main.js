@@ -1,11 +1,14 @@
 import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
-import vant from 'vant2';
 import store from './store/index.js'
-import 'vant2/lib/index.css';
+import Vant from 'vant';
+import 'vant/lib/index.css';
 
-Vue.use(vant);
+import { Checkbox, CheckboxGroup } from 'vant';
+
+Vue.use(Checkbox).use(CheckboxGroup);
+Vue.use(Vant)
 
 Vue.config.productionTip = false
 

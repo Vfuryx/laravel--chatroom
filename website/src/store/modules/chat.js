@@ -1,9 +1,12 @@
+
 const chat = {
     state: {
         username: '',
         avatar: '',
         userList: [],
-        record: {}
+        record: {},
+        groupList: [],
+        groups: {},
     },
     mutations: {
         SET_USERNAME: (state, username) => {
@@ -29,7 +32,6 @@ const chat = {
                     break
                 }
             }
-
             state.userList.splice(k, 1)
         },
         SET_RECOR: (state, data) => {
@@ -37,6 +39,24 @@ const chat = {
         },
         SET_ADDRECOR: (state, data) => {
             state.record[data.from].push(data)
+        },
+        ADD_MY_RECOR: (state, data) => {
+            state.record[data.to].push(data)
+        },
+        SET_GROUPLIST: (state, data) => {
+            console.log(data)
+            for (let group of data) {
+                state.groupList.push(group.name)
+                state.groups[group.name] = []
+            }
+        },
+        SET_GROUP: (state, data) => {
+            state.groupList.push(data.Content)
+            state.groups[data.Content] = []
+        },
+        SET_ADDGROUP: (state, data) => {
+            console.log(data)
+            state.groups[data.to].push(data)
         },
     },
     getters: {
@@ -46,8 +66,17 @@ const chat = {
         chatUserList: state => {
             return state.userList
         },
+        group: state => {
+            return state.group
+        },
+        groupList: state => {
+            return state.groupList
+        },
         getRecordBy: (state) => (name) => {
             return state.record[name]
+        },
+        getGroupBy: (state) => (name) => {
+            return state.groups[name]
         },
         getRecord: (state) => {
             return state.record
@@ -60,6 +89,16 @@ const chat = {
         }, data) {
             commit('SET_USERLIST', data)
         },
+        setGroupList({
+            commit
+        }, data) {
+            commit('SET_GROUPLIST', data)
+        },
+        creatGroup({
+            commit
+        }, data) {
+            commit('SET_GROUP', data)
+        },
         removeUser({
             commit
         }, data) {
@@ -68,10 +107,17 @@ const chat = {
         giveMe({
             commit
         }, data) {
-
-            console.log(4545444545445454)
-            console.log(data)
             commit('SET_ADDRECOR', data)
+        },
+        addMyRecor({
+            commit
+        }, data) {
+            commit('ADD_MY_RECOR', data)
+        },
+        group({
+            commit
+        }, data) {
+            commit('SET_ADDGROUP', data)
         },
         addUser({
             commit
@@ -82,8 +128,7 @@ const chat = {
             commit
         }, data) {
             commit('SET_RECOR', data)
-
-        }
+        },
     }
 }
 
