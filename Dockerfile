@@ -1,8 +1,6 @@
-FROM golang:latest
+FROM golang:1.13.0
 
-ENV GO111MODULE=on
-
-ENV GOPROXY=https://athens.azurefd.net
+ENV GOPROXY=https://goproxy.cn
 
 EXPOSE 9090
 
