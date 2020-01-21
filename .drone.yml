@@ -1,0 +1,59 @@
+kind: pipeline
+type: docker
+name: chatroom
+
+platform:
+  os: linux
+  arсh: amd64
+
+#clone:
+#  disable: true
+
+workspace:
+  base: /home
+  path: .
+
+steps:
+  - name: build
+    image: golang:1.13
+    volumes:
+      - name: cache
+        path: /tmp/cache
+    environment:
+      GOOS: linux
+      GOARCH: amd64
+      GOPROXY: https://goproxy.cn
+    commands:
+      - pwd
+      - ls
+      - go mod tidy
+      - go build main.go
+      - ls
+      - cp -r ./* /tmp/cache
+  - name: run
+    image: appleboy/drone-ssh
+    when:
+      status:
+        - success
+    settings:
+      host:
+        from_secret: ssh_host
+      username:
+        from_secret: ssh_username
+      password:
+        from_secret: ssh_password
+      port:
+        from_secret: ssh_port
+      script:
+        - cd /home/chatroom/
+        - nohup ./main  &>/dev/null &
+        - ls
+
+volumes:
+  - name: cache
+    host:
+      path: /home/chatroom
+
+trigger:
+  branch:
+  - dev

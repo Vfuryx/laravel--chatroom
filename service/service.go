@@ -10,40 +10,18 @@ import (
 	"time"
 )
 
-// 存储客户端的集合 格式是 ["用户名"] -> 客户端结构体
-var ClientMap map[string]*Client = make(map[string]*Client)
-
-// 客户端结构体 存储 客户端的资料
-type Client struct {
-	Conn  *websocket.Conn // 链接
-	Name  string		  // 用户名
-	PWD   string          // 密码
-	Queue chan []byte     // 队列
-	Close bool
-}
-
-var GroupMap map[string]*Group = make(map[string]*Group)
-
-// 群组结构体
-type Group struct {
-	Name string				// 名称
-	Type int				// 公共或者私有 0 / 1
-	Admin string			// 群主
-	List map[string]*Client	// 私有群的用户列表
-}
-
 // 定义消息和类型常量 要与前端配合
 const (
 	// 消息源
-	MSG_SOURCE_PRIVATE     = 1
-	MSG_SOURCE_GROUP       = 2
-	MSG_SOURCE_PING_PONG   = 3
-	MSG_SOURCE_USER_LIST   = 4
-	MSG_SOURCE_ADD_USER    = 5
-	MSG_SOURCE_REMOVE_USER = 6
-	MSG_SOURCE_CREATE_PUBLIC_GROUP = 7
+	MSG_SOURCE_PRIVATE              = 1
+	MSG_SOURCE_GROUP                = 2
+	MSG_SOURCE_PING_PONG            = 3
+	MSG_SOURCE_USER_LIST            = 4
+	MSG_SOURCE_ADD_USER             = 5
+	MSG_SOURCE_REMOVE_USER          = 6
+	MSG_SOURCE_CREATE_PUBLIC_GROUP  = 7
 	MSG_SOURCE_CREATE_PRIVATE_GROUP = 8
-	MSG_SOURCE_GROUP_LIST = 9
+	MSG_SOURCE_GROUP_LIST           = 9
 
 	// 消息类型
 	MSG_TYPE_DEFAULT  = 1
@@ -52,7 +30,7 @@ const (
 	MSG_TYPE_REDPACK  = 4
 
 	// 群组类型
-	GROUP_TYPE_PUBLIC = 0
+	GROUP_TYPE_PUBLIC  = 0
 	GROUP_TYPE_PRIVATE = 1
 )
 
@@ -66,63 +44,27 @@ type MSG struct {
 	SendAt  time.Time // 发送时间
 }
 
-/**
- * 发送消息给客户端
- */
-func (c *Client) Sendproc() {
-	for {
-		if c.Close {
-			return
-		}
-
-		select {
-		case msg := <-c.Queue:
-
-			err := c.Conn.WriteMessage(websocket.TextMessage, msg);
-			if err != nil {
-				log.Println(err)
-				// 错误立即关闭websocket与客户端的链接
-
-				c.Close = true
-				c.Conn.Close()
-				break
-			}
-		}
-	}
+type Service struct {
+	CCM *ConcurrentClientMap // 存储客户端的集合 格式是 ["用户名"] -> 客户端结构体
+	CGM *ConcurrentGroupMap  // 存储群组
 }
 
-/**
- * 接收 客户端发送的消息
- */
-func (c *Client) Recvproc() {
-	for {
-		_, content, err := c.Conn.ReadMessage()
+var S Service
 
-		if err != nil {
-			log.Println(err)
-			// 错误立即关闭websocket与客户端的链接
-			c.Close = true
-			c.Conn.Close()
-
-			break
-		}
-		// 消息处理
-		MSGHandle(c.Name, content)
-		//Broadcast(content)
-		//c.Queue <- content
-	}
+func init() {
+	S.CCM = NewConcurrentClientMap(32)
+	S.CGM = NewConcurrentGroupMap(32)
 }
 
 // 发送消息
 // name 用户名
 // msg  消息
 func SendMsg(name string, msg []byte) {
-
-	for userName, client := range ClientMap {
-		if userName == name && client.Close == false {
+	S.CCM.Range(func(key string, client *Client) {
+		if key == name && client.Close == false {
 			client.Queue <- msg
 		}
-	}
+	})
 }
 
 // 消息处理函数
@@ -131,18 +73,18 @@ func SendMsg(name string, msg []byte) {
 func MSGHandle(fromName string, content []byte) {
 	var m MSG
 	// 解析消息 将 json 转为 MSG结构
-	json.Unmarshal(content, &m)
+	_ = json.Unmarshal(content, &m)
 
 	//判断源
 	switch m.Source {
-	case MSG_SOURCE_PRIVATE: 		// 私信
+	case MSG_SOURCE_PRIVATE: // 私信
 		sendToUser(m.To, content)
-	case MSG_SOURCE_GROUP:  		// 群聊
+	case MSG_SOURCE_GROUP: // 群聊
 		sendGroup(fromName, m)
 
-	case MSG_SOURCE_PING_PONG:		// 心跳
+	case MSG_SOURCE_PING_PONG: // 心跳
 
-	case MSG_SOURCE_USER_LIST:		// 获取用户列表
+	case MSG_SOURCE_USER_LIST: // 获取用户列表
 		getUserList(fromName)
 
 	case MSG_SOURCE_CREATE_PUBLIC_GROUP:
@@ -164,32 +106,28 @@ func MSGHandle(fromName string, content []byte) {
 // to 是指要接收者名称
 // content 接收的内容
 func sendToUser(to string, content []byte) {
-	if ClientMap[to].Close == false {
-		ClientMap[to].Queue <- content
-	}
+	S.CCM.SendToClient(to, content)
 }
 
 // 群聊
-func sendGroup(from string, m MSG)  {
-	g, ok := GroupMap[m.To]
+func sendGroup(from string, m MSG) {
+	g, ok := S.CGM.Get(m.To)
 	if !ok {
 		return
 	}
 
 	msg := MSG{
-		Source: MSG_SOURCE_GROUP,
-		From: from,
-		To: g.Name,
-		Type: m.Type,
+		Source:  MSG_SOURCE_GROUP,
+		From:    from,
+		To:      g.Name,
+		Type:    m.Type,
 		Content: m.Content,
-		SendAt: m.SendAt,
+		SendAt:  m.SendAt,
 	}
-
 	b, err := json.Marshal(msg)
 	if err != nil {
 		panic(err)
 	}
-
 
 	switch g.Type {
 	case GROUP_TYPE_PUBLIC:
@@ -197,21 +135,19 @@ func sendGroup(from string, m MSG)  {
 	case GROUP_TYPE_PRIVATE:
 
 	}
-
 }
 
 // 获取用户列表
 // client 的 close 属性为 false 即还没关闭，是在线用户
 // 整合在线用户信息 发给客户端
 func getUserList(from string) {
-	content := []gin.H{}
+	content := make([]gin.H, 0, 100)
 
-	for name, client := range ClientMap {
+	S.CCM.Range(func(key string, client *Client) {
 		if client.Close == false {
-
-			content = append(content, gin.H{"name": name})
+			content = append(content, gin.H{"name": key})
 		}
-	}
+	})
 
 	data, err := json.Marshal(content)
 	if err != nil {
@@ -227,20 +163,17 @@ func getUserList(from string) {
 		SendAt:  time.Now(),
 	}
 	res, _ := json.Marshal(msg)
-
-	if ClientMap[from].Close == false {
-		ClientMap[from].Queue <- res
-	}
+	S.CCM.SendToClient(from, res)
 }
 
 // 获取群组
-func getGroupList(from string)  {
-	content := []gin.H{}
-	for name, group := range GroupMap {
+func getGroupList(from string) {
+	content := make([]gin.H, 0, 100)
+	S.CGM.Range(func(key string, group *Group) {
 		if group.Type == GROUP_TYPE_PUBLIC {
-			content = append(content, gin.H{"name": name})
+			content = append(content, gin.H{"name": key})
 		}
-	}
+	})
 
 	data, err := json.Marshal(content)
 	if err != nil {
@@ -257,35 +190,34 @@ func getGroupList(from string)  {
 	}
 	res, _ := json.Marshal(msg)
 
-	if ClientMap[from].Close == false {
-		ClientMap[from].Queue <- res
-	}
-
+	S.CCM.SendToClient(from, res)
 }
 
 // 创建公共群组
-func createPublicGroup(from string, content string)  {
+func createPublicGroup(from string, content string) {
 	fmt.Println("group")
 	// 判断是否存在公共群组(存在则忽略)
-	if _, ok := GroupMap[content]; ok {
+
+	if _, ok := S.CGM.Get(content); ok {
 		return
 	}
 
 	// 创建公共群组
-	GroupMap[content] = &Group{
-		Name: content,
-		Type: GROUP_TYPE_PUBLIC,
+	g := &Group{
+		Name:  content,
+		Type:  GROUP_TYPE_PUBLIC,
 		Admin: from,
-		List: map[string]*Client{},
+		List:  map[string]*Client{},
 	}
+	S.CGM.Set(content, g)
 
 	msg := MSG{
-		Source:	MSG_SOURCE_CREATE_PUBLIC_GROUP,
-		From: from,
-		To: "",
-		Type: MSG_TYPE_DEFAULT,
+		Source:  MSG_SOURCE_CREATE_PUBLIC_GROUP,
+		From:    from,
+		To:      "",
+		Type:    MSG_TYPE_DEFAULT,
 		Content: content,
-		SendAt: time.Now(),
+		SendAt:  time.Now(),
 	}
 
 	m, err := json.Marshal(msg)
@@ -311,27 +243,32 @@ func AddUser(name string) {
 	}
 	res, _ := json.Marshal(msg)
 
-	for n, client := range ClientMap {
-		if n != name && client.Close == false {
+	S.CCM.Range(func(key string, client *Client) {
+		if key != name && client.Close == false {
 			client.Queue <- res
 		}
-
-	}
+	})
 }
 
 // 广播
 func Broadcast(msg []byte) {
-	for _, client := range ClientMap {
+	S.CCM.Range(func(key string, client *Client) {
 		if client.Close == false {
 			client.Queue <- msg
 		}
+	})
+}
+
+func CloseHandle(name string) func(int, string) error {
+	return func(i int, s string) error {
+		log.Println("我关闭了88")
+		return Offline(name)
 	}
 }
 
 // 离线处理
 func Offline(name string) error {
-
-	c, ok := ClientMap[name];
+	c, ok := S.CCM.Get(name)
 	if ok == false {
 		return errors.New(name + " 无法离线")
 	}
@@ -344,14 +281,12 @@ func Offline(name string) error {
 		),
 		time.Now().Add(time.Second),
 	)
-
 	if err != nil {
-
+		return err
 	}
 
 	c.Close = true
-
-	c.Conn.Close()
+	_ = c.Conn.Close()
 
 	msg := MSG{
 		Source:  MSG_SOURCE_REMOVE_USER,
@@ -364,7 +299,7 @@ func Offline(name string) error {
 	res, err := json.Marshal(msg)
 
 	if err != nil {
-
+		return err
 	}
 
 	Broadcast(res)
