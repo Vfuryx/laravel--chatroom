@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"log"
 	"net/http"
 )
 
@@ -23,8 +22,7 @@ var ws = func() *websocket.Upgrader {
 
 // 登录授权检查
 func WsAuth(name, pwd string) error {
-
-	c, ok := service.ClientMap[name]
+	c, ok := service.S.CCM.Get(name)
 	if ok {
 		if c.PWD != pwd {
 			return errors.New("用户已经存,密码不正确")
@@ -40,7 +38,7 @@ func WsAuth(name, pwd string) error {
 	return nil
 }
 
-func upgradeWebSocket(ctx *gin.Context)  {
+func upgradeWebSocket(ctx *gin.Context) {
 
 	name := ctx.Query("name")
 	pwd := ctx.Query("password")
@@ -65,40 +63,29 @@ func upgradeWebSocket(ctx *gin.Context)  {
 	}
 
 	// 存入map
-	service.ClientMap[name] = &service.Client{
-		Conn: conn,
-		Name: name,
-		PWD: pwd,
+	c := &service.Client{
+		Conn:  conn,
+		Name:  name,
+		PWD:   pwd,
 		Queue: make(chan []byte, 50),
 		Close: false,
 	}
+	service.S.CCM.Set(name, c)
 
 	// 设置客户端触发关闭事件
-	conn.SetCloseHandler(func(code int, text string) error {
-		log.Println("我关闭了88")
+	conn.SetCloseHandler(service.CloseHandle(name))
 
-		if err := service.Offline(name); err != nil {
-			return err
-		}
-
-		return nil
-	})
-
+	//c, _ = service.S.GetClient(name)
 	// 开启接收消息协程
-	go service.ClientMap[name].Recvproc()
+	go c.Recv(service.MSGHandle)
 	// 开启发送消息协程
-	go service.ClientMap[name].Sendproc()
+	go c.Send()
 
 	fmt.Println(name + " 上线了")
 
 	// 广播所有登录消息
 	service.AddUser(name)
-
-	fmt.Println(service.ClientMap)
-
 }
-
-
 
 func main() {
 
@@ -114,7 +101,7 @@ func main() {
 
 	r.Static("/public", "./public")
 
-	if err := r.Run(":9090"); err != nil {
+	if err := r.Run(":9091"); err != nil {
 		panic(err)
 	}
 
